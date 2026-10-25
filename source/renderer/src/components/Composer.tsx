@@ -19,7 +19,6 @@ import type {
 } from '../../../shared/protocol'
 import { IconButton } from './Primitives'
 import { Select } from './Select'
-import { VoiceInput } from './VoiceInput'
 import { composerCommands, parseComposerCommand } from '../commands'
 
 const efforts: ReasoningEffort[] = [
@@ -68,7 +67,8 @@ export function Composer({
   onCancel: () => void
   onError: (message: string) => void
 }) {
-  const [voiceBusy, setVoiceBusy] = useState(false)
+  const voiceBusy = false
+  const filePicker = useRef<HTMLInputElement>(null)
   const [commandIndex, setCommandIndex] = useState(0)
   const [mentionIndex, setMentionIndex] = useState(0)
   const [mentionFiles, setMentionFiles] = useState<ProjectFile[]>([])
@@ -151,12 +151,7 @@ export function Composer({
   }
   const attach = async () => {
     try {
-      const files = await window.muse.chooseAttachments()
-      if (attachments.length + files.length > 5) {
-        await Promise.all(files.map((file) => window.muse.removeAttachment(file.id)))
-        throw new Error('You can attach up to five files per message.')
-      }
-      setAttachments((current) => [...current, ...files])
+      filePicker.current?.click()
     } catch (error) {
       onError(error instanceof Error ? error.message : String(error))
     }
@@ -360,10 +355,29 @@ export function Composer({
             }
           }}
         />
+        <input ref={filePicker} type="file" multiple hidden
+          accept=".txt,.md,.csv,.json,.js,.jsx,.ts,.tsx,.py,.css,.html,.xml,.yaml,.yml,.toml,.log,.sh,.ps1,.sql,.rs,.go,.java,.c,.h,.cpp"
+          onChange={async (event) => {
+            const files = Array.from(event.currentTarget.files || [])
+            event.currentTarget.value = ''
+            try {
+              if (files.length > 5) throw new Error('每次最多选择 5 个文件。')
+              if (files.reduce((sum, file) => sum + file.size, 0) > 120 * 1024) throw new Error('文件总大小不能超过 120 KB。')
+              const parts: string[] = []
+              for (const file of files) {
+                if (!/\.(txt|md|csv|json|js|jsx|ts|tsx|py|css|html|xml|yaml|yml|toml|log|sh|ps1|sql|rs|go|java|c|h|cpp)$/i.test(file.name)) throw new Error('目前仅支持文本和代码文件，暂不支持图片或 PDF。')
+                const text = await file.text()
+                if (text.includes(String.fromCharCode(0))) throw new Error('不能添加二进制文件。')
+                parts.push('文件：' + file.name + String.fromCharCode(10) + text)
+              }
+              if (parts.length) setDraft([latestDraft.current, ...parts].filter(Boolean).join(String.fromCharCode(10, 10)))
+              textarea.current?.focus()
+            } catch (error) { onError(error instanceof Error ? error.message : String(error)) }
+          }} />
         <div className="composer-toolbar">
           <div className="composer-tools">
             <IconButton
-              label="Attach images or text files"
+              label="添加文本或代码文件"
               disabled={submitting}
               onClick={() => {
                 void attach()
@@ -372,16 +386,6 @@ export function Composer({
               <Paperclip size={17} />
             </IconButton>
             <span className="toolbar-divider" />
-            <VoiceInput
-              disabled={submitting || !connected}
-              onBusy={setVoiceBusy}
-              onError={onError}
-              onText={(text) => {
-                const existing = latestDraft.current
-                setDraft(`${existing}${existing && !/\s$/.test(existing) ? ' ' : ''}${text}`)
-                textarea.current?.focus()
-              }}
-            />
             <Select
               label="Model"
               className="model-select"

@@ -1,7 +1,6 @@
 export const composerCommands = [
   { name: 'clear', description: 'Start a new conversation; keep saved history' },
   { name: 'new', description: 'Start a new conversation' },
-  { name: 'voice', description: 'Start voice input' },
   { name: 'model', description: 'Choose a model, or /model <model-id>' },
   { name: 'effort', description: 'Choose reasoning effort, or /effort <level>' },
   { name: 'compact', description: 'Compact this conversation with Muse Code' },

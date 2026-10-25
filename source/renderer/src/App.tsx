@@ -341,18 +341,7 @@ export function App() {
         if (name === 'clear' || name === 'new') startNew()
         if (name === 'help') setPage('docs')
         if (name === 'settings') setSettings('appearance')
-        if (name === 'voice') {
-          if (argument === 'status')
-            showSuccess(
-              `Use ${altKey}V to start or stop recording. Muse Code transcribes speech into your draft.`,
-            )
-          else if (argument === 'cancel') window.dispatchEvent(new Event('muse:voice-cancel'))
-          else if (!argument) window.dispatchEvent(new Event('muse:voice'))
-          else
-            throw new Error(
-              'Use /voice to record, /voice cancel to discard, or /voice status for help.',
-            )
-        }
+        if (name === 'voice') throw new Error('此插件不支持语音输入。')
         if (name === 'model') {
           if (!argument) window.dispatchEvent(new CustomEvent('muse:select', { detail: 'Model' }))
           else {
