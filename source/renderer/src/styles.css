@@ -2284,6 +2284,23 @@ details[open] > summary .details-chevron,
   font-size: var(--font-ui);
   font-weight: 600;
 }
+.delete-conversations-dialog { width: 400px; max-width: calc(100vw - 32px); overflow-y: auto; border-radius: 16px; }
+.delete-conversations-dialog .dialog-heading { padding: 20px 20px 8px 24px; border: 0; }
+.delete-conversations-dialog .dialog-heading h2 { font-size: 17px; }
+.delete-dialog-body { padding: 10px 24px 22px; }
+.delete-dialog-summary { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; color: var(--muted); font-size: 12px; }
+.delete-dialog-count { min-width: 20px; padding: 1px 6px; border-radius: 6px; background: var(--selected); color: var(--text); text-align: center; font-variant-numeric: tabular-nums; }
+.delete-dialog-preview { padding: 4px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--soft-surface); }
+.delete-dialog-item { display: flex; align-items: center; gap: 10px; min-height: 36px; color: var(--text); font-size: 13px; }
+.delete-dialog-item svg { flex-shrink: 0; color: var(--muted); }
+.delete-dialog-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.delete-dialog-more { padding: 4px 0 8px 25px; color: var(--muted); font-size: 12px; }
+.delete-dialog-warning { margin: 18px 0 5px; font-size: 13px; line-height: 1.6; }
+.delete-dialog-note { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.delete-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 0 24px 22px; }
+.delete-dialog-actions .button { min-height: 34px; padding: 7px 16px; border-radius: 8px; font-size: 13px; box-shadow: none; }
+.delete-dialog-actions .danger { background: #b43d3d; border: 1px solid #b43d3d; color: #fff; }
+.delete-dialog-actions .danger:hover:not(:disabled) { background: #9d3333; border-color: #9d3333; }
 .settings-dialog {
   width: 880px;
   max-width: calc(100vw - 64px);

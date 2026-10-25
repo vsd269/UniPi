@@ -11,6 +11,9 @@
  */
 
 export const ZH = {
+  'Selected conversations': '已选对话',
+  'Conversation messages will be deleted permanently.': '删除后，对话消息将无法恢复。',
+  'Native sessions and original files will be kept.': '原生会话与原始文件会保留。',
   Cancel: '取消',
   'Select conversations': '批量管理对话',
   'Done selecting': '完成选择',

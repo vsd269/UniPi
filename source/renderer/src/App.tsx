@@ -1170,12 +1170,16 @@ export function App() {
         />
       )}
       {deleteCandidates.length > 0 && (
-        <Dialog title="Delete conversations" onClose={() => { if (!deletingSessions) setDeleteCandidates([]) }}>
-          <p><span>Conversations to delete:</span> {deleteCandidates.length}</p>
-          <ul>{deleteCandidates.slice(0, 3).map(id => { const session = sessions.find(entry => entry.sessionId === id); return <li key={id}>{session ? sessionTitle(session) : id}</li> })}</ul>
-          <p>These UniPi conversations and their messages will be permanently deleted. This cannot be undone.</p>
-          <p>Native Pi Desktop sessions and original attachment files are not deleted.</p>
-          <div className="request-actions">
+        <Dialog title="Delete conversations" className="delete-conversations-dialog" onClose={() => { if (!deletingSessions) setDeleteCandidates([]) }}>
+          <div className="delete-dialog-body">
+            <p className="delete-dialog-summary"><span>Selected conversations</span><span className="delete-dialog-count">{deleteCandidates.length}</span></p>
+            <div className="delete-dialog-preview">{deleteCandidates.slice(0, 3).map(id => { const session = sessions.find(entry => entry.sessionId === id); return <div className="delete-dialog-item" key={id}><MessageSquare size={15} /><span>{session ? sessionTitle(session) : id}</span></div> })}
+              {deleteCandidates.length > 3 && <div className="delete-dialog-more">+{deleteCandidates.length - 3}</div>}
+            </div>
+            <p className="delete-dialog-warning">Conversation messages will be deleted permanently.</p>
+            <p className="delete-dialog-note">Native sessions and original files will be kept.</p>
+          </div>
+          <div className="delete-dialog-actions">
             <button type="button" className="button secondary" disabled={deletingSessions} onClick={() => setDeleteCandidates([])}>Cancel</button>
             <button type="button" className="button danger" disabled={deletingSessions} onClick={() => void confirmDeleteSessions()}>
               {deletingSessions ? 'Deleting…' : 'Delete permanently'}
