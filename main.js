@@ -1203,7 +1203,13 @@ async function onRendererCall(method, args = {}) {
   const name = String(method ?? "");
 
   if (name === 'bridge.result') return bridgeJobs.result(args?.id);
-  if (name === "bridge.invoke") return bridgeJobs.start(() => invokeChannel(args?.channel, args));
+  if (name === "bridge.invoke") {
+    const channel = String(args?.channel || '').replace(/^muse\./, '');
+    const action = args?.args?.[0]?.action;
+    // Bounded memory-only calls finish immediately; dialogs and disk I/O keep tickets.
+    if (channel === 'pollEvents' || (channel === 'image-upload' && ['begin', 'chunk'].includes(action))) return invokeChannel(args?.channel, args);
+    return bridgeJobs.start(() => invokeChannel(args?.channel, args));
+  }
   if (name === "layer.request") {
     lastLayerPollAt = Date.now();
     return { open: layerWanted };

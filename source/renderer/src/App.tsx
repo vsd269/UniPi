@@ -168,12 +168,22 @@ export function App() {
       if (sequence === historySequence.current) setHistoryLoading(false)
     }
   }, [])
+  const pendingPreferences = useRef<Partial<Preferences>>({})
+  const preferenceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const preferenceSequence = useRef(0)
+  useEffect(() => () => clearTimeout(preferenceTimer.current), [])
   const savePreferences = useCallback(
     (patch: Partial<Preferences>) => {
-      void window.muse
-        .savePreferences(patch)
-        .then(setPreferences)
-        .catch((error: Error) => showError(error.message))
+      pendingPreferences.current = { ...pendingPreferences.current, ...patch }
+      setPreferences(current => ({ ...current, ...patch }))
+      const sequence = ++preferenceSequence.current
+      clearTimeout(preferenceTimer.current)
+      preferenceTimer.current = setTimeout(() => {
+        const saving = { ...pendingPreferences.current }
+        void window.muse.savePreferences(saving).then(saved => {
+          if (sequence === preferenceSequence.current) { pendingPreferences.current = {}; setPreferences(saved) }
+        }).catch((error: Error) => showError(error.message))
+      }, 250)
     },
     [showError],
   )
@@ -195,7 +205,7 @@ export function App() {
   useEffect(() => {
     const receive = (event: AppEvent) => {
       if (event.type === 'connection') setStatus(event.status)
-      if (event.type === 'preferences') setPreferences(event.preferences)
+      if (event.type === 'preferences') setPreferences({ ...event.preferences, ...pendingPreferences.current })
       if (event.type === 'error') showError(event.message)
       if (event.type === 'menu') menuHandler.current(event.action)
       if (event.type === 'session') {

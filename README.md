@@ -12,7 +12,7 @@
 
 ## 安装与使用
 
-1. 从本仓库 Releases 下载 `local.unipi-0.3.17.piplug`。
+1. 从本仓库 Releases 下载 `local.unipi-0.3.18.piplug`。
 2. 在 PI-Desktop 插件管理中安装本地插件包，查看并确认所需权限。需要 PI-Desktop >= 0.21.0。
 3. 点击侧栏独角兽图标，或在命令面板执行 **UniPi: Open**。
 4. 使用 PI-Desktop 中已配置的模型。设置项 `modelKey` 可填写 `providerId/modelId`，留空使用默认模型。

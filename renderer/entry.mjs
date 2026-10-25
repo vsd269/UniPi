@@ -29,6 +29,16 @@ const CLOSE_SVG =
 const ASSET_BASE = new URL('../views/muse/', import.meta.url).href
 const assetUrl = (file) => assets[file] || new URL(file, ASSET_BASE).href
 const ICON_URL = assetUrl('launcher.png')
+// Decode theme artwork once ahead of switching, retaining the decoded images.
+const themeImages = []
+function warmThemeImages() {
+  for (const file of ['muse-logo.png', 'themes/daylight.png', 'themes/moonlight.png', 'themes/grove.png', 'themes/plush.png']) {
+    const image = new Image()
+    image.src = assetUrl(file)
+    themeImages.push(image)
+    void image.decode().catch(() => {})
+  }
+}
 
 let layer
 let surfaceLayer
@@ -44,6 +54,7 @@ let poll
 let alive = false
 let visible = false
 let dispatchCall
+let imageTransfers = 0
 
 function scopeStyles(text) {
   return String(text || '')
@@ -91,7 +102,7 @@ function installMuseBridge(pi, onWindowAction) {
 
   let eventPending = false
   const eventTimer = setInterval(() => {
-    if (!listeners.size || eventPending) return
+    if (!listeners.size || eventPending || imageTransfers) return
     eventPending = true
     void (async () => {
       try {
@@ -135,7 +146,11 @@ function installMuseBridge(pi, onWindowAction) {
     answer: (sessionId, userInputId, answers) => call('answer', [sessionId, userInputId, answers]),
     cancelQuestion: (sessionId, userInputId) => call('cancel-question', [sessionId, userInputId]),
     chooseAttachments: () => call('attachments'),
-    uploadImage: (input) => call('image-upload', [input]),
+    uploadImage: async (input) => {
+      imageTransfers += 1
+      try { return await call('image-upload', [input]) }
+      finally { imageTransfers -= 1 }
+    },
     removeAttachment: (id) => call('remove-attachment', [id]),
     requestMicrophone: () => call('microphone'),
     transcribeVoice: (audio) => call('voice', [audio]),
@@ -164,6 +179,7 @@ function installMuseBridge(pi, onWindowAction) {
 }
 
 export async function onLoad(pi) {
+  if (!themeImages.length) setTimeout(warmThemeImages, 500)
   dispatchCall = createCallQueue((action, payload) => pi.dispatch(action, payload))
   alive = true
   layer = pi.ui.openLayer()
@@ -363,7 +379,7 @@ export async function onLoad(pi) {
   // ── show/hide, driven by the main process ────────────────────────────────
   let layerPending = false
   poll = setInterval(async () => {
-    if (!alive || layerPending) return
+    if (!alive || layerPending || imageTransfers) return
     layerPending = true
     try {
       const answer = await dispatchCall({ method: 'layer.request' })
