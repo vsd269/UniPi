@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "local.unipi",
   "name": "UniPi",
-  "version": "0.3.19",
+  "version": "0.3.20",
   "description": "Unofficial learning adaptation of Muse Desktop for PI-Desktop, using host-configured models and replacement unicorn artwork.",
   "i18n": {
     "en": {
@@ -21,7 +21,7 @@
   "license": "MIT",
   "homepage": "https://github.com/vsd269/UniPi",
   "repository": "https://github.com/vsd269/UniPi",
-  "changelog": "0.3.19: Increase image upload chunks to 60000 base64 characters and shared dispatch rate to at most 8 calls/s, within host limits.",
+  "changelog": "0.3.20: Hide launcher when native sidebar is covered; share file upload flow for paste, drag and picker.",
   "safetyNotes": "图片会通过 Pi Desktop 原生 Agent 会话发送给所选模型服务商，需支持视觉输入的模型。新增 desktop.control 权限；原生工具及审批遵循宿主权限，等待审批时请在原生会话处理。文本对话仍使用 agent.complete。麦克风、PDF 暂不支持。",
   "main": "main.js",
   "categories": [

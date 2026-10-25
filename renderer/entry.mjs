@@ -346,6 +346,11 @@ export async function onLoad(pi) {
     const nativeButtons = [...footer.querySelectorAll('button')].map(node => node.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0)
     const first = nativeButtons[0]
     const second = nativeButtons[1]
+    // Native sidebar DOM can remain mounted under another plugin layer.
+    if (first) {
+      const hit = document.elementFromPoint(first.left + first.width / 2, first.top + first.height / 2)
+      if (!hit || !footer.contains(hit)) { entry.style.display = 'none'; return }
+    }
     const left = first ? first.left + first.width / 2 - 16 : box.left
     const step = second && first ? Math.max(32, second.left + second.width / 2 - first.left - first.width / 2) : 32
     const top = box.top - 36
