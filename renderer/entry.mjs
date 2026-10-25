@@ -17,6 +17,7 @@
 
 import { mount, styles } from '../views/muse/app/muse-app.mjs'
 import { assets } from './assets.mjs'
+import { createCallQueue } from './call-queue.mjs'
 import { startI18n } from '../views/muse/i18n.mjs'
 
 const CLOSE_SVG =
@@ -42,6 +43,7 @@ let stopI18n
 let poll
 let alive = false
 let visible = false
+let dispatchCall
 
 function scopeStyles(text) {
   return String(text || '')
@@ -72,13 +74,15 @@ function installMuseBridge(pi, onWindowAction) {
   let lastSeq = 0
 
   const call = (channel, args) =>
-    pi.dispatch('plugin.call', {
+    dispatchCall({
       method: 'bridge.invoke',
       args: { channel: 'muse.' + channel, args: args ?? [] },
     })
 
+  let eventPending = false
   const eventTimer = setInterval(() => {
-    if (!listeners.size) return
+    if (!listeners.size || eventPending) return
+    eventPending = true
     void (async () => {
       try {
         const result = await call('pollEvents', [{ after: lastSeq }])
@@ -95,7 +99,7 @@ function installMuseBridge(pi, onWindowAction) {
         }
       } catch {
         /* host busy */
-      }
+      } finally { eventPending = false }
     })()
   }, 300)
 
@@ -150,6 +154,7 @@ function installMuseBridge(pi, onWindowAction) {
 }
 
 export async function onLoad(pi) {
+  dispatchCall = createCallQueue((action, payload) => pi.dispatch(action, payload))
   alive = true
   layer = pi.ui.openLayer()
 
@@ -346,21 +351,23 @@ export async function onLoad(pi) {
   const tick = setInterval(reposition, 1500)
 
   // ── show/hide, driven by the main process ────────────────────────────────
+  let layerPending = false
   poll = setInterval(async () => {
-    if (!alive) return
+    if (!alive || layerPending) return
+    layerPending = true
     try {
-      const answer = await pi.dispatch('plugin.call', { method: 'layer.request' })
+      const answer = await dispatchCall({ method: 'layer.request' })
       const wanted = Boolean(answer && answer.open)
       if (wanted !== visible) setVisible(wanted)
     } catch {
       /* host busy or shutting down */
-    }
+    } finally { layerPending = false }
   }, 700)
 
   async function show(api) {
     setVisible(true)
     try {
-      await api.dispatch('plugin.call', { method: 'layer.show' })
+      await dispatchCall({ method: 'layer.show' })
     } catch (error) {
       console.warn('[muse] could not record the open request:', error)
     }
@@ -369,7 +376,7 @@ export async function onLoad(pi) {
   async function hide(api) {
     setVisible(false)
     try {
-      await api.dispatch('plugin.call', { method: 'layer.close' })
+      await dispatchCall({ method: 'layer.close' })
     } catch (error) {
       console.warn('[muse] could not record the close request:', error)
     }
