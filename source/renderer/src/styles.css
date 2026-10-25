@@ -3924,3 +3924,6 @@ button.breadcrumb-segment:hover {
 /* Visible editing caret in embedded light themes. */
 textarea,input,[contenteditable="true"]{caret-color:var(--text,#30332f)}
 [data-theme="daylight"] textarea,[data-theme="grove"] textarea{caret-color:#26362b;color-scheme:light}
+
+/* Embedded root must own theme variables as well as descendants. */
+.app-shell[data-theme] { color: var(--text); background: var(--app-background); }

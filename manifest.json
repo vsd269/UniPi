@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "local.unipi",
   "name": "UniPi",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "Unofficial learning adaptation of Muse Desktop for PI-Desktop, using host-configured models and replacement unicorn artwork.",
   "i18n": {
     "en": {
@@ -21,7 +21,7 @@
   "license": "MIT",
   "homepage": "https://github.com/vsd269/UniPi",
   "repository": "https://github.com/vsd269/UniPi",
-  "changelog": "0.3.11: Rename adaptation to UniPi and publish in an independent repository.",
+  "changelog": "0.3.12: Restore embedded theme scope so Muse and Plush backgrounds and palettes activate correctly.",
   "safetyNotes": "Conversation text and the project folder path are sent to the model provider configured in PI-Desktop whenever you send a message (agent.complete). The plugin keeps its conversations and preferences in its own data directory. It can list a project folder, read files inside it for the preview pane, run read-only git status/diff, reveal a folder and open a terminal there, and open http(s) links in your browser. It cannot write files, run tools, or read credentials.",
   "main": "main.js",
   "categories": [

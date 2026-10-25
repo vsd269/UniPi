@@ -185,9 +185,7 @@ export function App() {
     return () => media.removeEventListener('change', listener)
   }, [])
   useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    document.documentElement.dataset.textSize = preferences.fontSize
-    document.documentElement.dataset.reduceMotion = String(preferences.reduceMotion)
+    // Theme state belongs to the embedded app, never the host document.
   }, [theme, preferences.fontSize, preferences.reduceMotion])
   useEffect(() => {
     if (!toast || toast.kind === 'error') return
@@ -503,6 +501,9 @@ export function App() {
 
   return (
     <div
+      data-theme={theme}
+      data-text-size={preferences.fontSize}
+      data-reduce-motion={String(preferences.reduceMotion)}
       className={`app-shell ${sidebar ? '' : 'sidebar-hidden'} ${inspector ? 'with-inspector' : ''}`}
       style={{ '--background-presence': preferences.backgroundIntensity / 100 } as CSSProperties}
     >
