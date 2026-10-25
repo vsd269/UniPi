@@ -7,10 +7,12 @@ for folder in ['renderer', 'views']:
     files.extend(f for f in (root / folder).rglob('*') if f.is_file() and '.bak' not in f.name)
 output = root / 'dist' / (manifest['id'] + '-' + manifest['version'] + '.piplug')
 output.parent.mkdir(exist_ok=True)
-with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
+# PI-Desktop marketplace requires every entry to use ZIP method 0 (Store).
+with zipfile.ZipFile(output, 'w', zipfile.ZIP_STORED) as archive:
     for f in sorted(files):
         archive.write(f, f.relative_to(root).as_posix())
 with zipfile.ZipFile(output) as archive:
+    assert all(entry.compress_type == zipfile.ZIP_STORED for entry in archive.infolist()), 'Every .piplug entry must use Store compression'
     assert archive.testzip() is None
     assert json.loads(archive.read('manifest.json'))['version'] == manifest['version']
 print(str(output))
