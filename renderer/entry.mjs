@@ -73,11 +73,21 @@ function installMuseBridge(pi, onWindowAction) {
   const listeners = new Set()
   let lastSeq = 0
 
-  const call = (channel, args) =>
-    dispatchCall({
+  const call = async (channel, args) => {
+    const ticket = await dispatchCall({
       method: 'bridge.invoke',
       args: { channel: 'muse.' + channel, args: args ?? [] },
     })
+    if (!ticket?.bridgeJobId) return ticket
+    const deadline = Date.now() + 10 * 60 * 1000
+    while (Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 200))
+      const result = await dispatchCall({ method: 'bridge.result', args: { id: ticket.bridgeJobId } })
+      if (result.state === 'error') throw new Error(result.error)
+      if (result.state === 'done') return result.value
+    }
+    throw new Error('操作仍未完成，请检查 Pi Desktop 的对话框或原生会话；不要重复发送消息。')
+  }
 
   let eventPending = false
   const eventTimer = setInterval(() => {

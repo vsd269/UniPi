@@ -27,6 +27,7 @@
 
 const fs = require("node:fs/promises");
 const nativeImages = require('./native-images');
+const bridgeJobs = require('./bridge-jobs').createBridgeJobs();
 const path = require("node:path");
 const os = require("node:os");
 const { execFile, spawn } = require("node:child_process");
@@ -1200,7 +1201,8 @@ async function onRendererCall(method, args = {}) {
   if (!loaded) await onLoad();
   const name = String(method ?? "");
 
-  if (name === "bridge.invoke") return await invokeChannel(args?.channel, args);
+  if (name === 'bridge.result') return bridgeJobs.result(args?.id);
+  if (name === "bridge.invoke") return bridgeJobs.start(() => invokeChannel(args?.channel, args));
   if (name === "layer.request") {
     lastLayerPollAt = Date.now();
     return { open: layerWanted };

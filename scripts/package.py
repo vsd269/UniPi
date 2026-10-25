@@ -2,7 +2,7 @@ from pathlib import Path
 import json, zipfile, hashlib
 root = Path(__file__).resolve().parents[1]
 manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
-files = [root / name for name in ['manifest.json', 'main.js', 'native-images.js', 'icon.svg', 'LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'UPSTREAM-NOTICE.md', 'DEPENDENCY-LICENSES.txt']]
+files = [root / name for name in ['manifest.json', 'main.js', 'native-images.js', 'bridge-jobs.js', 'icon.svg', 'LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'UPSTREAM-NOTICE.md', 'DEPENDENCY-LICENSES.txt']]
 for folder in ['renderer', 'views']:
     files.extend(f for f in (root / folder).rglob('*') if f.is_file() and '.bak' not in f.name)
 output = root / 'dist' / (manifest['id'] + '-' + manifest['version'] + '.piplug')
