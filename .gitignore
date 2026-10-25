@@ -1,5 +1,5 @@
 node_modules/
 renderer/*.bak*
 dist/*.piplug
-!dist/local.unipi-0.3.16.piplug
+!dist/local.unipi-0.3.17.piplug
 *.log

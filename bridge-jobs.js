@@ -22,6 +22,7 @@ function createBridgeJobs({ ttl = 600000, max = 128, now = Date.now } = {}) {
     result(id) {
       const job = jobs.get(id);
       if (!job) throw Error('Bridge operation expired; please try again');
+      if (job.state !== 'pending') jobs.delete(id);
       return { state: job.state, ...(job.state === 'done' ? { value: job.value } : {}), ...(job.state === 'error' ? { error: job.error } : {}) };
     },
   };

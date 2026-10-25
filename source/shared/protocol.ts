@@ -8,6 +8,7 @@ export const itemSchema = z.object({
   turnId: z.string().nullish(),
   text: z.string().optional(),
   displayText: z.string().optional(),
+  imageRefs: z.array(z.object({ id: z.string(), name: z.string(), mimeType: z.string() })).optional(),
   summary: z.array(z.string()).optional(),
   tool: z.string().optional(),
   args: z.string().optional(),
@@ -239,7 +240,7 @@ export interface DesktopAPI {
   answer(sessionId: string, userInputId: string, answers: QuestionAnswer[]): Promise<void>
   cancelQuestion(sessionId: string, userInputId: string): Promise<void>
   chooseAttachments(): Promise<Attachment[]>
-  uploadImage(input: { action: string; id?: string; name?: string; mimeType?: string; size?: number; offset?: number; chunk?: string }): Promise<{ id: string }>
+  uploadImage(input: { action: string; id?: string; name?: string; mimeType?: string; size?: number; offset?: number; chunk?: string }): Promise<{ id: string; chunk?: string; next?: number; done?: boolean }>
   removeAttachment(id: string): Promise<void>
   requestMicrophone(): Promise<void>
   transcribeVoice(audio: Uint8Array): Promise<string>

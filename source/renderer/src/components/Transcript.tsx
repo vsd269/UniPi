@@ -1,4 +1,34 @@
 import { isInternalActivity } from '../activity'
+
+const imageCache = new Map<string, string>()
+function SentImage({ file }: { file: { id: string; name: string; mimeType: string } }) {
+  const [src, setSrc] = useState(imageCache.get(file.id) || '')
+  const [error, setError] = useState(false)
+  useEffect(() => {
+    if (imageCache.has(file.id)) { setSrc(imageCache.get(file.id)!); return }
+    let cancelled = false
+    void (async () => {
+      try {
+        let offset = 0
+        const chunks: string[] = []
+        while (!cancelled) {
+          const result = await window.muse.uploadImage({ action: 'preview', id: file.id, mimeType: file.mimeType, offset })
+          chunks.push(result.chunk || '')
+          if (result.done) break
+          if (!result.next || result.next <= offset) throw Error('Invalid image response')
+          offset = result.next
+        }
+        if (!cancelled) {
+          const value = 'data:' + file.mimeType + ';base64,' + chunks.join('')
+          if (imageCache.size >= 20) imageCache.delete(imageCache.keys().next().value!)
+          imageCache.set(file.id, value); setSrc(value)
+        }
+      } catch { if (!cancelled) setError(true) }
+    })()
+    return () => { cancelled = true }
+  }, [file.id, file.mimeType])
+  return <figure style={{ margin: '10px 0' }}>{src ? <a href={src} download={file.name}><img src={src} alt={file.name} style={{ maxWidth: '100%', width: 240, maxHeight: 240, objectFit: 'contain', borderRadius: 10 }} /></a> : <span>{error ? '图片无法读取：' : '正在加载图片：'}{file.name}</span>}<figcaption>{file.name}</figcaption></figure>
+}
 import { isValidElement, useEffect, useRef, useState, type ReactNode } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -589,6 +619,7 @@ export function Transcript({
                       <CopyButton text={userText} />
                     </div>
                     <div className="user-message-text">{userText}</div>
+                    {item.imageRefs?.map(file => <SentImage key={file.id} file={file} />)}
                   </article>
                 )
               }

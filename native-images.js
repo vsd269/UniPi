@@ -14,6 +14,20 @@ function signature(bytes, mime) {
   return /^GIF8[79]a$/.test(bytes.toString('ascii',0,6));
 }
 async function upload(dataDir, input) {
+  if (input.action === 'preview') {
+    if (!/^[a-f0-9-]{36}$/.test(input.id) || !TYPES[input.mimeType]) throw Error('Invalid image reference');
+    const file = path.join(dataDir, 'image-uploads', input.id + '.' + TYPES[input.mimeType]);
+    const offset = Number(input.offset || 0);
+    if (!Number.isSafeInteger(offset) || offset < 0 || offset > MAX_BYTES) throw Error('Invalid image offset');
+    const handle = await fs.open(file, 'r');
+    try {
+      const stat = await handle.stat();
+      if (stat.size > MAX_BYTES) throw Error('Image too large');
+      const buffer = Buffer.alloc(24000);
+      const { bytesRead } = await handle.read(buffer, 0, buffer.length, offset);
+      return { chunk: buffer.subarray(0, bytesRead).toString('base64'), next: offset + bytesRead, done: offset + bytesRead >= stat.size };
+    } finally { await handle.close(); }
+  }
   for (const [id, entry] of uploads) if (Date.now() - entry.at > 600000) uploads.delete(id);
   if (input.action === 'begin') {
     if (!TYPES[input.mimeType] || !Number.isSafeInteger(input.size) || input.size <= 0 || input.size > MAX_BYTES) throw Error('图片格式不支持或超过 10 MB。');

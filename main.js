@@ -434,6 +434,7 @@ function startTurn(sessionId, text, images = []) {
     turnId,
     text: display,
     displayText: display,
+    imageRefs: images,
   });
   live.items.push(userItem);
   if (!live.session.firstUserPrompt) live.session.firstUserPrompt = display.slice(0, 400);
@@ -462,7 +463,7 @@ async function generate(live, turnId, agentItem, images = []) {
     const system = live.summary
       ? `${systemPrompt(live)}\n\nSummary of the earlier conversation:\n${live.summary}`
       : systemPrompt(live);
-    const previousImages = live.items.flatMap(item => item.imageRefs || []);
+    const previousImages = live.items.filter(item => item.turnId !== turnId).flatMap(item => item.imageRefs || []);
     const imageContext = [...previousImages, ...images].slice(-5);
     const result = imageContext.length ? await nativeImages.complete({
       pi, dataDir, live, modelKey, text: messages.at(-1)?.content || '', attachments: imageContext,
