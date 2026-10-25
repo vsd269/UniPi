@@ -26,6 +26,7 @@
 "use strict";
 
 const fs = require("node:fs/promises");
+const nativeImages = require('./native-images');
 const path = require("node:path");
 const os = require("node:os");
 const { execFile, spawn } = require("node:child_process");
@@ -422,7 +423,7 @@ function newItem(fields) {
   };
 }
 
-function startTurn(sessionId, text) {
+function startTurn(sessionId, text, images = []) {
   const live = requireSession(sessionId);
   const turnId = randomUUID();
   const display = text;
@@ -446,11 +447,11 @@ function startTurn(sessionId, text) {
   emitSession(sessionId);
   emit({ type: "sessions-changed" });
   void persistSessions();
-  void generate(live, turnId, agentItem);
+  void generate(live, turnId, agentItem, images);
   return viewOf(sessionId);
 }
 
-async function generate(live, turnId, agentItem) {
+async function generate(live, turnId, agentItem, images = []) {
   const sessionId = live.session.sessionId;
   try {
     const modelKey = await resolveModelKey(live);
@@ -460,7 +461,18 @@ async function generate(live, turnId, agentItem) {
     const system = live.summary
       ? `${systemPrompt(live)}\n\nSummary of the earlier conversation:\n${live.summary}`
       : systemPrompt(live);
-    const result = await callModel(modelKey, system, messages, prefs.reasoningEffort);
+    const previousImages = live.items.flatMap(item => item.imageRefs || []);
+    const imageContext = [...previousImages, ...images].slice(-5);
+    const result = imageContext.length ? await nativeImages.complete({
+      pi, dataDir, live, modelKey, text: messages.at(-1)?.content || '', attachments: imageContext,
+      history: messages.slice(0,-1).map(m => m.role + ': ' + m.content).join('\n').slice(-120000),
+      active: () => live.session.activeTurnId === turnId,
+      update: text => { if (live.session.activeTurnId === turnId) { agentItem.text = text; agentItem.revision += 1; emitSession(sessionId); } },
+    }) : await callModel(modelKey, system, messages, prefs.reasoningEffort);
+    if (images.length) {
+      const user = live.items.find(item => item.turnId === turnId && item.kind === 'userMessage');
+      if (user) user.imageRefs = images;
+    }
     if (live.session.activeTurnId !== turnId) return;
     const text = String(result?.text ?? "").trim();
     agentItem.text = text || "(The model returned an empty reply.)";
@@ -513,6 +525,7 @@ function trimItems(live) {
 function cancelTurn(sessionId) {
   const live = requireSession(sessionId);
   if (live.session.status !== "running") return;
+  if (live.nativeRun?.turnId) void pi.desktop.invoke({ operation: 'agent/abort', args: [{ ...live.nativeRun }] }).catch(console.error);
   const agentItem = [...live.items].reverse().find((item) => item.status === "inProgress");
   if (agentItem) {
     agentItem.status = "cancelled";
@@ -917,8 +930,10 @@ const handlers = {
     const live = requireSession(sessionId);
     const text = String(input?.text ?? "");
     const attachments = Array.isArray(input?.attachments) ? input.attachments : [];
-    if (attachments.length) noAttachments();
-    if (!text.trim()) throw new Error("Write a message first.");
+    const images = nativeImages.files(attachments);
+    if (!text.trim() && !images.length) throw new Error("Write a message first.");
+    if (images.length && !pi.desktop?.invoke) throw new Error('此宿主不支持原生图片会话，请更新 Pi Desktop。');
+    if (images.length && live.session.status === 'running') throw new Error('请等待当前回复结束后再发送图片。');
     if (text.length > MAX_MESSAGE_CHARS) throw new Error("This message is too long.");
     if (live.session.status === "running") {
       if (input?.mode === "steer") {
@@ -929,7 +944,7 @@ const handlers = {
       live.queue.push(text);
       return undefined;
     }
-    startTurn(sessionId, text);
+    startTurn(sessionId, text || '请分析所附图片。', images);
     return undefined;
   },
 
@@ -972,7 +987,8 @@ const handlers = {
   attachments: async () => {
     noAttachments();
   },
-  "remove-attachment": async () => undefined,
+  'image-upload': async input => nativeImages.upload(dataDir, input),
+  "remove-attachment": async id => nativeImages.upload(dataDir, { action: 'remove', id }),
   microphone: noVoice,
   voice: noVoice,
   "cancel-voice": async () => undefined,

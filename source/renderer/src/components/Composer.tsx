@@ -69,6 +69,8 @@ export function Composer({
 }) {
   const voiceBusy = false
   const filePicker = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const attachmentsRef = useRef<Attachment[]>([])
   const [commandIndex, setCommandIndex] = useState(0)
   const [mentionIndex, setMentionIndex] = useState(0)
   const [mentionFiles, setMentionFiles] = useState<ProjectFile[]>([])
@@ -131,6 +133,7 @@ export function Composer({
   const latestDraft = useRef(draft)
   latestDraft.current = draft
   const [attachments, setAttachments] = useState<Attachment[]>([])
+  attachmentsRef.current = attachments
   const [mode, setMode] = useState<'queue' | 'steer'>('queue')
   const textarea = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
@@ -141,7 +144,7 @@ export function Composer({
   }, [draft])
   const submit = async () => {
     if (
-      voiceBusy ||
+      voiceBusy || uploading ||
       submitting ||
       (!connected && !isCommand) ||
       (!draft.trim() && !attachments.length)
@@ -265,7 +268,7 @@ export function Composer({
           <div className="attachment-list">
             {attachments.map((file) => (
               <span className="attachment" key={file.id}>
-                {file.kind === 'image' ? <Image size={14} /> : <FileText size={14} />}
+                {file.preview ? <img src={file.preview} alt={file.name} style={{width:48,height:48,objectFit:'cover',borderRadius:6}} /> : file.kind === 'image' ? <Image size={14} /> : <FileText size={14} />}
                 <span>{file.name}</span>
                 <button
                   type="button"
@@ -356,15 +359,29 @@ export function Composer({
           }}
         />
         <input ref={filePicker} type="file" multiple hidden
-          accept=".txt,.md,.csv,.json,.js,.jsx,.ts,.tsx,.py,.css,.html,.xml,.yaml,.yml,.toml,.log,.sh,.ps1,.sql,.rs,.go,.java,.c,.h,.cpp"
+          accept="image/png,image/jpeg,image/webp,image/gif,.txt,.md,.csv,.json,.js,.jsx,.ts,.tsx,.py,.css,.html,.xml,.yaml,.yml,.toml,.log,.sh,.ps1,.sql,.rs,.go,.java,.c,.h,.cpp"
           onChange={async (event) => {
             const files = Array.from(event.currentTarget.files || [])
             event.currentTarget.value = ''
             try {
+              setUploading(true)
               if (files.length > 5) throw new Error('每次最多选择 5 个文件。')
-              if (files.reduce((sum, file) => sum + file.size, 0) > 120 * 1024) throw new Error('文件总大小不能超过 120 KB。')
+              if (attachmentsRef.current.length + files.filter(file => file.type.startsWith('image/')).length > 5) throw new Error('每条消息最多 5 张图片。')
+              if (files.filter(file => !file.type.startsWith('image/')).reduce((sum, file) => sum + file.size, 0) > 120 * 1024) throw new Error('文本文件总大小不能超过 120 KB。')
               const parts: string[] = []
               for (const file of files) {
+                if (/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
+                  if (file.size > 10 * 1024 * 1024) throw new Error('单张图片最多 10 MB。')
+                  const preview = await new Promise<string>((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error('图片读取失败。')); reader.readAsDataURL(file) })
+                  const encoded = preview.slice(preview.indexOf(',') + 1)
+                  const upload = await window.muse.uploadImage({action:'begin',name:file.name,mimeType:file.type,size:file.size})
+                  try {
+                    for (let offset = 0; offset < encoded.length; offset += 48000) await window.muse.uploadImage({action:'chunk',id:upload.id,offset,chunk:encoded.slice(offset,offset+48000)})
+                    await window.muse.uploadImage({action:'finish',id:upload.id})
+                    setAttachments(current => [...current,{id:upload.id,name:file.name,size:file.size,kind:'image',preview}])
+                  } catch (error) { await window.muse.removeAttachment(upload.id).catch(() => {}); throw error }
+                  continue
+                }
                 if (!/\.(txt|md|csv|json|js|jsx|ts|tsx|py|css|html|xml|yaml|yml|toml|log|sh|ps1|sql|rs|go|java|c|h|cpp)$/i.test(file.name)) throw new Error('目前仅支持文本和代码文件，暂不支持图片或 PDF。')
                 const text = await file.text()
                 if (text.includes(String.fromCharCode(0))) throw new Error('不能添加二进制文件。')
@@ -372,13 +389,13 @@ export function Composer({
               }
               if (parts.length) setDraft([latestDraft.current, ...parts].filter(Boolean).join(String.fromCharCode(10, 10)))
               textarea.current?.focus()
-            } catch (error) { onError(error instanceof Error ? error.message : String(error)) }
+            } catch (error) { onError(error instanceof Error ? error.message : String(error)) } finally { setUploading(false) }
           }} />
         <div className="composer-toolbar">
           <div className="composer-tools">
             <IconButton
-              label="添加文本或代码文件"
-              disabled={submitting}
+              label={uploading ? '正在上传图片…' : '添加图片、文本或代码文件'}
+              disabled={submitting || uploading}
               onClick={() => {
                 void attach()
               }}
@@ -438,7 +455,7 @@ export function Composer({
               type="submit"
               aria-label={running ? 'Send follow-up' : 'Send message'}
               disabled={
-                voiceBusy ||
+                voiceBusy || uploading ||
                 submitting ||
                 (!connected && !isCommand) ||
                 (!draft.trim() && !attachments.length)

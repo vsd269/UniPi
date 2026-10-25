@@ -12,7 +12,7 @@
 
 ## 安装与使用
 
-1. 从本仓库 Releases 下载 `local.unipi-0.3.13.piplug`。
+1. 从本仓库 Releases 下载 `local.unipi-0.3.14.piplug`。
 2. 在 PI-Desktop 插件管理中安装本地插件包，查看并确认所需权限。需要 PI-Desktop >= 0.21.0。
 3. 点击侧栏独角兽图标，或在命令面板执行 **UniPi: Open**。
 4. 使用 PI-Desktop 中已配置的模型。设置项 `modelKey` 可填写 `providerId/modelId`，留空使用默认模型。
@@ -23,9 +23,9 @@
 
 - 使用 PI-Desktop 的 manifest、插件主进程、renderer extension 和宿主 layer API。
 - 将原 Electron preload API 适配到插件桥接；通过 Shadow DOM 隔离界面样式。
-- 通过 `agent.complete` 使用宿主模型，不需要 Muse Code CLI 或额外 Meta 账号。回复为一次性返回。
+- 通过 `agent.complete` 使用宿主模型，不需要 Muse Code CLI 或额外 Meta 账号。纯文字回复为一次性返回，图片会话会轮询更新回复。
 - 支持会话、偏好、模型选择、项目文件预览、只读 Git 信息与对话压缩。
-- 模型不执行工具，不自动读文件或执行命令；支持选择文本和代码文件加入草稿（每次最多 5 个，总计 120 KB）；图片、PDF 和麦克风暂不可用。
+- 纯文字补全不执行工具；图片消息使用原生 Agent 会话，原生工具和审批遵循宿主权限。支持文本及代码文件导入、图片附件；PDF 和麦克风暂不可用。
 - 发送消息时，对话与项目路径会发送给宿主中配置的模型服务商。插件保存自己的会话及偏好，可以打开链接、定位目录与打开终端。
 - 保留上游界面结构，并调整素材、亮色主题光标、窗口控件、中文适配和宿主界面切换。
 
@@ -60,3 +60,7 @@ py scripts/package.py
 ## 从旧适配版升级
 
 UniPi 使用独立标识 `local.unipi`，旧版为 `local.muse-desktop`。安装后请禁用旧版，避免重复入口。两者的数据目录独立，旧版会话不会自动迁移；请保留旧版数据。
+
+## 图片消息（0.3.14）
+
+附件按钮支持 PNG、JPEG、WebP、GIF，单张最多 10 MB，每条消息最多 5 张；选择后显示预览。图片上传使用 48 KB 分段，避免超过插件桥限制。图片消息通过 desktop.control 创建原生 Agent 会话，回复读回 UniPi，无需安装 PI Bot 或修改宿主。需要视觉模型；原生工具和审批遵循宿主权限。等待审批时可在 Pi Desktop 会话列表打开 UniPi 会话处理。升级必须确认新增权限。保留最近最多 5 张图片作为后续图片对话上下文；PDF 暂不支持。

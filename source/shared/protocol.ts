@@ -187,7 +187,7 @@ export type UpdateStatus = {
 }
 export type GitChange = { path: string; status: string; staged: boolean }
 export type GitStatus = { branch: string; changes: GitChange[]; isRepository: boolean }
-export type Attachment = { id: string; name: string; kind: 'image' | 'text'; size: number }
+  export type Attachment = { id: string; name: string; kind: 'image' | 'text'; size: number; preview?: string }
 export type ProjectFile = { name: string; path: string; directory: boolean }
 export type AppEvent =
   | { type: 'connection'; status: ConnectionStatus }
@@ -239,6 +239,7 @@ export interface DesktopAPI {
   answer(sessionId: string, userInputId: string, answers: QuestionAnswer[]): Promise<void>
   cancelQuestion(sessionId: string, userInputId: string): Promise<void>
   chooseAttachments(): Promise<Attachment[]>
+  uploadImage(input: { action: string; id?: string; name?: string; mimeType?: string; size?: number; offset?: number; chunk?: string }): Promise<{ id: string }>
   removeAttachment(id: string): Promise<void>
   requestMicrophone(): Promise<void>
   transcribeVoice(audio: Uint8Array): Promise<string>

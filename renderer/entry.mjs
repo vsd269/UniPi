@@ -121,6 +121,7 @@ function installMuseBridge(pi, onWindowAction) {
     answer: (sessionId, userInputId, answers) => call('answer', [sessionId, userInputId, answers]),
     cancelQuestion: (sessionId, userInputId) => call('cancel-question', [sessionId, userInputId]),
     chooseAttachments: () => call('attachments'),
+    uploadImage: (input) => call('image-upload', [input]),
     removeAttachment: (id) => call('remove-attachment', [id]),
     requestMicrophone: () => call('microphone'),
     transcribeVoice: (audio) => call('voice', [audio]),

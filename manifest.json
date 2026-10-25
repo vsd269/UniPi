@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "id": "local.unipi",
   "name": "UniPi",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "description": "Unofficial learning adaptation of Muse Desktop for PI-Desktop, using host-configured models and replacement unicorn artwork.",
   "i18n": {
     "en": {
       "name": "UniPi",
       "description": "Unofficial learning adaptation of Muse Desktop for PI-Desktop, using host-configured models and replacement unicorn artwork.",
-      "safetyNotes": "Conversation text and the project folder path are sent to the model provider configured in PI-Desktop whenever you send a message (agent.complete). The plugin keeps its conversations and preferences in its own data directory. It can list a project folder, read files inside it for the preview pane, run read-only git status/diff, reveal a folder and open a terminal there, and open http(s) links in your browser. It cannot write files, run tools, or read credentials. Text/code files can be selected and inserted into the draft. Images, PDF and microphone input are unavailable."
+      "safetyNotes": "Images are sent through native PI Desktop Agent sessions using desktop.control. Native tools and approvals follow host permissions. Use a vision-capable model; handle pending approvals in the native session. Text-only chats use agent.complete. No microphone or PDF support."
     },
     "zh-CN": {
       "name": "UniPi",
       "description": "基于 Muse Desktop 的非官方学习迁移版：适配 PI-Desktop 插件体系，使用宿主模型和替换后的独角兽素材。",
-      "safetyNotes": "发送消息时，对话内容与项目文件夹路径会经 agent.complete 送到你在 PI-Desktop 中配置的模型服务商。插件把会话与偏好存在自己的数据目录。它可以列出项目文件夹、读取其中的文件用于预览、执行只读的 git status/diff、在资源管理器中定位文件夹、在项目里打开终端，以及用浏览器打开 http(s) 链接。它不写入文件、不运行工具、不读取凭据。支持选择文本及代码文件并加入草稿，图片、PDF 与麦克风暂不可用。"
+      "safetyNotes": "图片会通过 Pi Desktop 原生 Agent 会话发送给所选模型服务商，需支持视觉输入的模型。新增 desktop.control 权限；原生工具及审批遵循宿主权限，等待审批时请在原生会话处理。文本对话仍使用 agent.complete。麦克风、PDF 暂不支持。"
     }
   },
   "icon": "icon.svg",
@@ -21,8 +21,8 @@
   "license": "MIT",
   "homepage": "https://github.com/vsd269/UniPi",
   "repository": "https://github.com/vsd269/UniPi",
-  "changelog": "0.3.13: Remove microphone button; support selecting text/code files into the draft.",
-  "safetyNotes": "Conversation text and the project folder path are sent to the model provider configured in PI-Desktop whenever you send a message (agent.complete). The plugin keeps its conversations and preferences in its own data directory. It can list a project folder, read files inside it for the preview pane, run read-only git status/diff, reveal a folder and open a terminal there, and open http(s) links in your browser. It cannot write files, run tools, or read credentials.",
+  "changelog": "0.3.14: Add image uploads and native PI Desktop image conversations with replies inside UniPi.",
+  "safetyNotes": "图片会通过 Pi Desktop 原生 Agent 会话发送给所选模型服务商，需支持视觉输入的模型。新增 desktop.control 权限；原生工具及审批遵循宿主权限，等待审批时请在原生会话处理。文本对话仍使用 agent.complete。麦克风、PDF 暂不支持。",
   "main": "main.js",
   "categories": [
     "productivity"
@@ -34,7 +34,8 @@
     "agent.complete",
     "fs.read",
     "shell.openExternal",
-    "renderer.extension"
+    "renderer.extension",
+    "desktop.control"
   ],
   "engines": {
     "piDesktop": ">=0.21.0"
