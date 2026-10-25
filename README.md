@@ -12,7 +12,7 @@
 
 ## 安装与使用
 
-1. 从本仓库 Releases 下载 `local.unipi-0.3.18.piplug`。
+1. 从本仓库 Releases 下载 `local.unipi-0.3.19.piplug`。
 2. 在 PI-Desktop 插件管理中安装本地插件包，查看并确认所需权限。需要 PI-Desktop >= 0.21.0。
 3. 点击侧栏独角兽图标，或在命令面板执行 **UniPi: Open**。
 4. 使用 PI-Desktop 中已配置的模型。设置项 `modelKey` 可填写 `providerId/modelId`，留空使用默认模型。
@@ -63,4 +63,4 @@ UniPi 使用独立标识 `local.unipi`，旧版为 `local.muse-desktop`。安装
 
 ## 图片消息（0.3.14）
 
-附件按钮支持 PNG、JPEG、WebP、GIF，单张最多 10 MB，每条消息最多 5 张；选择后显示预览。图片上传使用 48 KB 分段，避免超过插件桥限制。图片消息通过 desktop.control 创建原生 Agent 会话，回复读回 UniPi，无需安装 PI Bot 或修改宿主。需要视觉模型；原生工具和审批遵循宿主权限。等待审批时可在 Pi Desktop 会话列表打开 UniPi 会话处理。升级必须确认新增权限。保留最近最多 5 张图片作为后续图片对话上下文；PDF 暂不支持。
+附件按钮支持 PNG、JPEG、WebP、GIF，单张最多 10 MB，每条消息最多 5 张；选择后显示预览。图片上传使用 60,000 字符分段，避免超过插件桥限制。图片消息通过 desktop.control 创建原生 Agent 会话，回复读回 UniPi，无需安装 PI Bot 或修改宿主。需要视觉模型；原生工具和审批遵循宿主权限。等待审批时可在 Pi Desktop 会话列表打开 UniPi 会话处理。升级必须确认新增权限。保留最近最多 5 张图片作为后续图片对话上下文；PDF 暂不支持。

@@ -46,7 +46,7 @@ async function upload(dataDir, input) {
   }
   if (!item) throw Error('图片上传已过期，请重新选择。');
   if (input.action === 'chunk') {
-    if (typeof input.chunk !== 'string' || input.chunk.length > 48000 || input.chunk.length % 4 || input.offset !== item.offset || !/^[A-Za-z0-9+/]+={0,2}$/.test(input.chunk)) throw Error('图片分段无效。');
+    if (typeof input.chunk !== 'string' || input.chunk.length > 60000 || input.chunk.length % 4 || input.offset !== item.offset || !/^[A-Za-z0-9+/]+={0,2}$/.test(input.chunk)) throw Error('图片分段无效。');
     const bytes = Buffer.from(input.chunk, 'base64');
     if (bytes.toString('base64') !== input.chunk || item.bytes + bytes.length > item.size) throw Error('图片分段长度无效。');
     item.chunks.push(bytes); item.bytes += bytes.length; item.offset += input.chunk.length; item.at = Date.now();

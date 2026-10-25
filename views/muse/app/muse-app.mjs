@@ -17515,7 +17515,7 @@ ${ft.trim()}
                         Ot.onload = () => Ie(String(Ot.result)), Ot.onerror = () => Ge(new Error("图片读取失败。")), Ot.readAsDataURL(fe);
                       }), Jt = vn.slice(vn.indexOf(",") + 1), at = await window.muse.uploadImage({ action: "begin", name: fe.name, mimeType: fe.type, size: fe.size });
                       try {
-                        for (let Ie = 0; Ie < Jt.length; Ie += 48e3) await window.muse.uploadImage({ action: "chunk", id: at.id, offset: Ie, chunk: Jt.slice(Ie, Ie + 48e3) });
+                        for (let Ie = 0; Ie < Jt.length; Ie += 6e4) await window.muse.uploadImage({ action: "chunk", id: at.id, offset: Ie, chunk: Jt.slice(Ie, Ie + 6e4) });
                         await window.muse.uploadImage({ action: "finish", id: at.id }), T((Ie) => [...Ie, { id: at.id, name: fe.name, size: fe.size, kind: "image", preview: vn }]);
                       } catch (Ie) {
                         throw await window.muse.removeAttachment(at.id).catch(() => {

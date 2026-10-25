@@ -376,7 +376,7 @@ export function Composer({
                   const encoded = preview.slice(preview.indexOf(',') + 1)
                   const upload = await window.muse.uploadImage({action:'begin',name:file.name,mimeType:file.type,size:file.size})
                   try {
-                    for (let offset = 0; offset < encoded.length; offset += 48000) await window.muse.uploadImage({action:'chunk',id:upload.id,offset,chunk:encoded.slice(offset,offset+48000)})
+                    for (let offset = 0; offset < encoded.length; offset += 60000) await window.muse.uploadImage({action:'chunk',id:upload.id,offset,chunk:encoded.slice(offset,offset+60000)})
                     await window.muse.uploadImage({action:'finish',id:upload.id})
                     setAttachments(current => [...current,{id:upload.id,name:file.name,size:file.size,kind:'image',preview}])
                   } catch (error) { await window.muse.removeAttachment(upload.id).catch(() => {}); throw error }

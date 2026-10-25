@@ -1,5 +1,5 @@
 // One budget for uploads, event polling and layer control. Never retry writes.
-export function createCallQueue(dispatch, { interval = 170, now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
+export function createCallQueue(dispatch, { interval = 125, now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
   let tail = Promise.resolve()
   let last = -Infinity
   return payload => {
