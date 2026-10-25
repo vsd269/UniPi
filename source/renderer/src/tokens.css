@@ -160,8 +160,7 @@
   --diff-removed: #e191990d;
   --backdrop: #070d1b88;
 }
-[data-theme='muse'],
-[data-theme='plush'] {
+[data-theme='muse'] {
   color-scheme: dark;
   --base: #062565;
   --app-background:
@@ -222,6 +221,36 @@
   --diff-added: #79d7ac15;
   --diff-removed: #efa9b418;
   --backdrop: #020e379c;
+}
+[data-theme='plush'] {
+  color-scheme: light;
+  --base: #fff0e9;
+  --app-background: #fff0e9;
+  --sidebar: #fae5df;
+  --sidebar-solid: #fae5df;
+  --dialog: #fff7f3;
+  --inspector: #faeae4;
+  --text: #49352f;
+  --heading: #55372e;
+  --message-text: #49352f;
+  --secondary-text: #755b52;
+  --muted: #80665b;
+  --placeholder: #886c61;
+  --accent: #a45e4b;
+  --serif-accent: #a45e4b;
+  --primary: #a85d4b;
+  --primary-border: #99523e44;
+  --selected: #f2d6cb;
+  --selection: #edc6b8;
+  --focus: #ac6c56;
+  --composer: #fffaf5eb;
+  --composer-border: #d2a39099;
+  --composer-focus: #b57860;
+  --code-background: #f5e5dc;
+  --user-avatar: #efd2c4;
+  --user-message: #fff8f0eb;
+  --request-border: #bd8a7155;
+  --request-background: #fff3e9ee;
 }
 [data-text-size='compact'] {
   --reading-size: 14px;

@@ -18,5 +18,20 @@ const images=require('../native-images');
  await assert.rejects(images.upload(data,{action:'begin',name:'big.png',mimeType:'image/png',size:11*1024*1024}));
  let active=true;const live={session:{}};const cancelPi={desktop:{invoke:async({operation})=>{if(operation==='session/create')return {session:{id:'cancel-session'}};if(operation==='agent/prompt'){active=false;return {accepted:true,turnId:'cancel-turn'}};operations.push(operation);return {}}}};
  await images.complete({pi:cancelPi,dataDir:data,live,modelKey:'p/m',text:'x',attachments:files,history:'',active:()=>active,update:()=>{}});assert(operations.includes('agent/abort'));assert.equal(live.nativeRun,undefined);
- console.log('PASS: upload bytes, native staging, attachment payload, reply round trip, size rejection, cancellation');
+ for (const sample of [{name:'notes.txt',mimeType:'text/plain',bytes:Buffer.from('文件内容不是输入框文字')},{name:'report.pdf',mimeType:'application/octet-stream',bytes:Buffer.from('%PDF-1.7 binary fixture')},{name:'empty.txt',mimeType:'text/plain',bytes:Buffer.alloc(0)}]) {
+   const upload=await images.upload(data,{action:'begin',name:sample.name,mimeType:sample.mimeType,size:sample.bytes.length});
+   if(sample.bytes.length) await images.upload(data,{action:'chunk',id:upload.id,offset:0,chunk:sample.bytes.toString('base64')});
+   const done=await images.upload(data,{action:'finish',id:upload.id});
+   assert.equal(done.kind,sample.mimeType==='text/plain'?'text':'file');
+   const selected=images.files([upload.id]);
+   assert.deepEqual(await fs.readFile(selected[0].path),sample.bytes);
+   const staged=await images.stage(data,'file-session',selected);
+   assert.equal(staged[0].kind,'file');assert.equal(path.extname(staged[0].path),path.extname(sample.name));
+   assert.deepEqual(await fs.readFile(staged[0].path),sample.bytes);
+   images.consume([upload.id]);await assert.rejects(async()=>images.files([upload.id]));
+ }
+ const invalid=await images.upload(data,{action:'begin',name:'bad.txt',mimeType:'text/plain',size:1});
+ await images.upload(data,{action:'chunk',id:invalid.id,offset:0,chunk:'/w=='});
+ await assert.rejects(images.upload(data,{action:'finish',id:invalid.id}));
+ console.log('PASS: images, text/binary/empty files, byte preservation, native extensions, consume, invalid UTF8, cancellation');
 })().catch(e=>{console.error(e);process.exitCode=1});

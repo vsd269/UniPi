@@ -620,6 +620,7 @@ export function Transcript({
                     </div>
                     <div className="user-message-text">{userText}</div>
                     {item.imageRefs?.map(file => <SentImage key={file.id} file={file} />)}
+                    {item.fileRefs?.map(file => <div key={file.id} className="attachment" style={{ marginTop: 8 }}><FileCode2 size={16} /><span>{file.name}</span><small>{Math.ceil(file.size / 1024)} KB</small></div>)}
                   </article>
                 )
               }

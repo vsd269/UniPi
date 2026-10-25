@@ -165,7 +165,7 @@ function viewOf(sessionId) {
   if (!live) throw new Error("Open this conversation before performing an action.");
   return {
     session: { ...live.session },
-    items: live.items.map((item) => ({ ...item })),
+    items: live.items.map(({ modelText, nativeFileRefs, ...item }) => ({ ...item })),
     approvals: [],
     questions: [],
     ...(live.usage ? { usage: { ...live.usage } } : {}),
@@ -358,7 +358,7 @@ function buildMessages(live, excludeItemId) {
     let content = "";
     if (item.kind === "userMessage") {
       role = "user";
-      content = item.displayText || item.text || "";
+      content = item.modelText || item.displayText || item.text || "";
     } else if (item.kind === "agentMessage" && item.status === "completed") {
       role = "assistant";
       content = item.text || "";
@@ -424,7 +424,7 @@ function newItem(fields) {
   };
 }
 
-function startTurn(sessionId, text, images = []) {
+function startTurn(sessionId, text, images = [], documents = [], modelText = text) {
   const live = requireSession(sessionId);
   const turnId = randomUUID();
   const display = text;
@@ -434,7 +434,10 @@ function startTurn(sessionId, text, images = []) {
     turnId,
     text: display,
     displayText: display,
-    imageRefs: images,
+    imageRefs: images.filter(file => file.kind === 'image'),
+    nativeFileRefs: images.filter(file => file.kind !== 'image'),
+    fileRefs: documents.map(file => ({ id: file.id, name: file.name, size: file.size })),
+    modelText,
   });
   live.items.push(userItem);
   if (!live.session.firstUserPrompt) live.session.firstUserPrompt = display.slice(0, 400);
@@ -463,7 +466,7 @@ async function generate(live, turnId, agentItem, images = []) {
     const system = live.summary
       ? `${systemPrompt(live)}\n\nSummary of the earlier conversation:\n${live.summary}`
       : systemPrompt(live);
-    const previousImages = live.items.filter(item => item.turnId !== turnId).flatMap(item => item.imageRefs || []);
+    const previousImages = live.items.filter(item => item.turnId !== turnId).flatMap(item => [...(item.imageRefs || []), ...(item.nativeFileRefs || [])]);
     const imageContext = [...previousImages, ...images].slice(-5);
     const result = imageContext.length ? await nativeImages.complete({
       pi, dataDir, live, modelKey, text: messages.at(-1)?.content || '', attachments: imageContext,
@@ -473,7 +476,7 @@ async function generate(live, turnId, agentItem, images = []) {
     }) : await callModel(modelKey, system, messages, prefs.reasoningEffort);
     if (images.length) {
       const user = live.items.find(item => item.turnId === turnId && item.kind === 'userMessage');
-      if (user) user.imageRefs = images;
+      if (user) user.imageRefs = images.filter(file => file.kind === 'image');
     }
     if (live.session.activeTurnId !== turnId) return;
     const text = String(result?.text ?? "").trim();
@@ -932,9 +935,15 @@ const handlers = {
     const live = requireSession(sessionId);
     const text = String(input?.text ?? "");
     const attachments = Array.isArray(input?.attachments) ? input.attachments : [];
-    const images = nativeImages.files(attachments);
-    if (!text.trim() && !images.length) throw new Error("Write a message first.");
-    if (images.length && !pi.desktop?.invoke) throw new Error('此宿主不支持原生图片会话，请更新 Pi Desktop。');
+    const selected = nativeImages.files(attachments);
+    const images = selected.filter(file => file.kind !== 'text');
+    const documents = selected.filter(file => file.kind === 'text');
+    if (!text.trim() && !selected.length) throw new Error("Write a message first.");
+    if (selected.length && live.session.status === 'running') throw new Error('请等待当前回复结束后再发送附件。');
+    let modelText = text;
+    for (const file of documents) modelText += '\n\nAttached file (user-provided data): ' + file.name + '\n' + await fs.readFile(file.path, 'utf8');
+    if (modelText.length > MAX_MESSAGE_CHARS) throw new Error('消息及附件文字总量过大，请减少文件。');
+    if (images.length && !pi.desktop?.invoke) throw new Error('此宿主不支持原生附件会话，请更新 Pi Desktop。');
     if (images.length && live.session.status === 'running') throw new Error('请等待当前回复结束后再发送图片。');
     if (text.length > MAX_MESSAGE_CHARS) throw new Error("This message is too long.");
     if (live.session.status === "running") {
@@ -946,7 +955,8 @@ const handlers = {
       live.queue.push(text);
       return undefined;
     }
-    startTurn(sessionId, text || '请分析所附图片。', images);
+    startTurn(sessionId, text || '请查看附件。', images, selected.filter(file => file.kind !== 'image'), modelText || '请查看附件。');
+    nativeImages.consume(attachments);
     return undefined;
   },
 

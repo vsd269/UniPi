@@ -937,9 +937,9 @@ kbd {
   transition: opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .main-workspace:has(.transcript, .loading-conversation) .welcome-art {
-  opacity: calc(var(--background-presence) * 0.14);
+  opacity: var(--background-presence);
 }
-:is([data-theme='muse'], [data-theme='plush']) .welcome-art {
+[data-theme='muse'] .welcome-art {
   opacity: 0 !important;
 }
 .theme-daylight {
@@ -950,6 +950,15 @@ kbd {
 }
 .theme-grove {
   background-image: url('/themes/grove.png');
+}
+.theme-plush {
+  background-image: url('/themes/plush.png');
+}
+.app-shell:not([data-theme='muse']) .chat-brand-background {
+  display: none;
+}
+.app-shell:not([data-theme='muse']) .welcome-art {
+  mask-image: none;
 }
 .welcome-content {
   position: relative;
@@ -3366,63 +3375,63 @@ button.breadcrumb-segment:hover {
 }
 
 /* The Muse theme follows the supplied blue desktop reference; the illustrated themes share the same structure. */
-:is([data-theme='muse'], [data-theme='plush']) .muse-mark {
+[data-theme='muse'] .muse-mark {
   filter: brightness(0) invert(1);
 }
-:is([data-theme='muse'], [data-theme='plush']) .sidebar {
+[data-theme='muse'] .sidebar {
   box-shadow: inset -1px 0 0 #7eadff0a;
 }
-:is([data-theme='muse'], [data-theme='plush']) .sidebar-titlebar {
+[data-theme='muse'] .sidebar-titlebar {
   color: #b8d2ff;
 }
-:is([data-theme='muse'], [data-theme='plush']) .desktop-tag {
+[data-theme='muse'] .desktop-tag {
   opacity: 0.6;
 }
-:is([data-theme='muse'], [data-theme='plush']) .main-nav button.selected > svg {
+[data-theme='muse'] .main-nav button.selected > svg {
   filter: drop-shadow(0 0 5px #8cd2ff99);
 }
-:is([data-theme='muse'], [data-theme='plush']) .chat-brand-background {
+[data-theme='muse'] .chat-brand-background {
   opacity: calc(var(--background-presence) * 0.95);
   filter: drop-shadow(0 1px 0 #5db2ff24);
 }
-:is([data-theme='muse'], [data-theme='plush']) .welcome-content {
+[data-theme='muse'] .welcome-content {
   padding: 0;
   position: absolute;
   bottom: 15px;
   left: 50%;
   transform: translateX(-50%);
 }
-:is([data-theme='muse'], [data-theme='plush']) .welcome-kicker,
-:is([data-theme='muse'], [data-theme='plush']) .welcome h1,
-:is([data-theme='muse'], [data-theme='plush']) .welcome-subtitle,
-:is([data-theme='muse'], [data-theme='plush']) .project-local {
+[data-theme='muse'] .welcome-kicker,
+[data-theme='muse'] .welcome h1,
+[data-theme='muse'] .welcome-subtitle,
+[data-theme='muse'] .project-local {
   display: none;
 }
-:is([data-theme='muse'], [data-theme='plush']) .welcome-project {
+[data-theme='muse'] .welcome-project {
   justify-content: flex-start;
 }
-:is([data-theme='muse'], [data-theme='plush']) .project-chip {
+[data-theme='muse'] .project-chip {
   background: #1e60c129;
   border-color: #80b8ff22;
   color: #c4d8fc;
   font-size: var(--font-support);
   backdrop-filter: blur(8px);
 }
-:is([data-theme='muse'], [data-theme='plush']) .starter-section {
+[data-theme='muse'] .starter-section {
   display: none;
 }
-:is([data-theme='muse'], [data-theme='plush']) .composer-tools .icon-button {
+[data-theme='muse'] .composer-tools .icon-button {
   background: #407de350;
   border: 1px solid #80b6ff36;
   color: #d9e8ff;
 }
-:is([data-theme='muse'], [data-theme='plush']) .select-control {
+[data-theme='muse'] .select-control {
   background: #2767c738;
   border-radius: 15px;
   padding: 5px 10px;
   gap: 7px;
 }
-:is([data-theme='muse'], [data-theme='plush']) .composer-tools .muse-select .select-control {
+[data-theme='muse'] .composer-tools .muse-select .select-control {
   min-height: 38px;
   background: #2767c738;
   border-color: transparent;
@@ -3430,23 +3439,23 @@ button.breadcrumb-segment:hover {
   padding: 7px 12px;
   gap: 6px;
 }
-:is([data-theme='muse'], [data-theme='plush']) .composer-tools .muse-select .select-control:hover {
+[data-theme='muse'] .composer-tools .muse-select .select-control:hover {
   background: #3578de4d;
 }
-:is([data-theme='muse'], [data-theme='plush']) .send-button:disabled {
+[data-theme='muse'] .send-button:disabled {
   border: 1px solid #8db9ff88;
   opacity: 0.9;
   box-shadow: 0 0 18px #287bff22;
 }
-:is([data-theme='muse'], [data-theme='plush']) .composer-footnote kbd {
+[data-theme='muse'] .composer-footnote kbd {
   background: #2767c745;
   border-color: #80b6ff33;
   color: #d9e8ff;
 }
-:is([data-theme='muse'], [data-theme='plush'])
+[data-theme='muse']
   .main-workspace:has(.transcript, .loading-conversation)
   .chat-brand-background {
-  opacity: calc(var(--background-presence) * 0.092);
+  opacity: calc(var(--background-presence) * 0.95);
 }
 
 @media (max-width: 1100px) {
@@ -3542,7 +3551,7 @@ button.breadcrumb-segment:hover {
   .brand {
     padding-bottom: 12px;
   }
-  :is([data-theme='muse'], [data-theme='plush']) .brand {
+  [data-theme='muse'] .brand {
     padding-bottom: 12px;
   }
   .sidebar-primary {
@@ -3641,18 +3650,6 @@ button.breadcrumb-segment:hover {
   scroll-behavior: auto !important;
 }
 
-[data-theme='plush'] .chat-brand-background {
-  background-image: linear-gradient(0deg, #06256588, transparent 40%), url('/themes/plush.png');
-  background-size: cover;
-  background-position: center right;
-  opacity: var(--background-presence);
-  filter: none;
-}
-[data-theme='plush']
-  .main-workspace:has(.transcript, .loading-conversation)
-  .chat-brand-background {
-  opacity: calc(var(--background-presence) * 0.09);
-}
 .conversation-group-label {
   width: 100%;
   display: inline-flex;
@@ -3813,18 +3810,18 @@ button.breadcrumb-segment:hover {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-:is([data-theme='muse'], [data-theme='plush']) .muse-select .select-control {
+[data-theme='muse'] .muse-select .select-control {
   background: #2767c738;
   padding: 6px 12px;
 }
-:is([data-theme='muse'], [data-theme='plush']) .project-switcher .select-control {
+[data-theme='muse'] .project-switcher .select-control {
   background: var(--soft-surface);
   padding: 6px 10px;
 }
-:is([data-theme='muse'], [data-theme='plush']) .project-switcher .select-control:hover {
+[data-theme='muse'] .project-switcher .select-control:hover {
   background: var(--hover);
 }
-:is([data-theme='muse'], [data-theme='plush']) .select-option[aria-selected='true'] {
+[data-theme='muse'] .select-option[aria-selected='true'] {
   color: #e3edff;
 }
 .voice-control {
@@ -3927,3 +3924,9 @@ textarea,input,[contenteditable="true"]{caret-color:var(--text,#30332f)}
 
 /* Embedded root must own theme variables as well as descendants. */
 .app-shell[data-theme] { color: var(--text); background: var(--app-background); }
+.app-shell .message {
+  background: color-mix(in srgb, var(--base) 92%, transparent);
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--faint-border);
+}

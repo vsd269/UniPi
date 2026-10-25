@@ -9,6 +9,7 @@ export const itemSchema = z.object({
   text: z.string().optional(),
   displayText: z.string().optional(),
   imageRefs: z.array(z.object({ id: z.string(), name: z.string(), mimeType: z.string() })).optional(),
+  fileRefs: z.array(z.object({ id: z.string(), name: z.string(), size: z.number() })).optional(),
   summary: z.array(z.string()).optional(),
   tool: z.string().optional(),
   args: z.string().optional(),
@@ -188,7 +189,7 @@ export type UpdateStatus = {
 }
 export type GitChange = { path: string; status: string; staged: boolean }
 export type GitStatus = { branch: string; changes: GitChange[]; isRepository: boolean }
-  export type Attachment = { id: string; name: string; kind: 'image' | 'text'; size: number; preview?: string }
+export type Attachment = { id: string; name: string; kind: 'image' | 'text' | 'file'; size: number; preview?: string }
 export type ProjectFile = { name: string; path: string; directory: boolean }
 export type AppEvent =
   | { type: 'connection'; status: ConnectionStatus }

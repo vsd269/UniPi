@@ -130,8 +130,6 @@ export function Composer({
     setCommandIndex(0)
     setMentionIndex(0)
   }, [draft])
-  const latestDraft = useRef(draft)
-  latestDraft.current = draft
   const [attachments, setAttachments] = useState<Attachment[]>([])
   attachmentsRef.current = attachments
   const [mode, setMode] = useState<'queue' | 'steer'>('queue')
@@ -164,28 +162,30 @@ export function Composer({
             try {
               setUploading(true)
               if (files.length > 5) throw new Error('每次最多选择 5 个文件。')
-              if (attachmentsRef.current.length + files.filter(file => file.type.startsWith('image/')).length > 5) throw new Error('每条消息最多 5 张图片。')
-              if (files.filter(file => !file.type.startsWith('image/')).reduce((sum, file) => sum + file.size, 0) > 120 * 1024) throw new Error('文本文件总大小不能超过 120 KB。')
-              const parts: string[] = []
+              if (attachmentsRef.current.length + files.length > 5) throw new Error('每条消息最多 5 个附件。')
               for (const file of files) {
-                if (/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
-                  if (file.size > 10 * 1024 * 1024) throw new Error('单张图片最多 10 MB。')
-                  const preview = await new Promise<string>((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error('图片读取失败。')); reader.readAsDataURL(file) })
+                {
+                  const isImage = /^image\/(png|jpeg|webp|gif)$/.test(file.type)
+                  let kind: Attachment['kind'] = isImage ? 'image' : 'file'
+                  let mimeType = isImage ? file.type : 'application/octet-stream'
+                  if (!isImage && file.size <= 120 * 1024 && /\.(txt|md|csv|json|js|jsx|ts|tsx|py|css|html|xml|yaml|yml|toml|log|sh|ps1|sql|rs|go|java|c|h|cpp)$/i.test(file.name)) {
+                    try {
+                      const content = new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer())
+                      if (!content.includes(String.fromCharCode(0))) { kind = 'text'; mimeType = 'text/plain' }
+                    } catch { /* Preserve other encodings as native file attachments. */ }
+                  }
+                  if (file.size > 10 * 1024 * 1024) throw new Error('单个附件最多 10 MB。')
+                  const preview = await new Promise<string>((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error('附件读取失败。')); reader.readAsDataURL(file) })
                   const encoded = preview.slice(preview.indexOf(',') + 1)
-                  const upload = await window.muse.uploadImage({action:'begin',name:file.name,mimeType:file.type,size:file.size})
+                  const upload = await window.muse.uploadImage({action:'begin',name:file.name,mimeType,size:file.size})
                   try {
                     for (let offset = 0; offset < encoded.length; offset += 60000) await window.muse.uploadImage({action:'chunk',id:upload.id,offset,chunk:encoded.slice(offset,offset+60000)})
                     await window.muse.uploadImage({action:'finish',id:upload.id})
-                    setAttachments(current => [...current,{id:upload.id,name:file.name,size:file.size,kind:'image',preview}])
+                    setAttachments(current => [...current,{id:upload.id,name:file.name,size:file.size,kind,preview:isImage ? preview : undefined}])
                   } catch (error) { await window.muse.removeAttachment(upload.id).catch(() => {}); throw error }
                   continue
                 }
-                if (!/\.(txt|md|csv|json|js|jsx|ts|tsx|py|css|html|xml|yaml|yml|toml|log|sh|ps1|sql|rs|go|java|c|h|cpp)$/i.test(file.name)) throw new Error('目前仅支持文本和代码文件，暂不支持图片或 PDF。')
-                const text = await file.text()
-                if (text.includes(String.fromCharCode(0))) throw new Error('不能添加二进制文件。')
-                parts.push('文件：' + file.name + String.fromCharCode(10) + text)
               }
-              if (parts.length) setDraft([latestDraft.current, ...parts].filter(Boolean).join(String.fromCharCode(10, 10)))
               textarea.current?.focus()
             } catch (error) { onError(error instanceof Error ? error.message : String(error)) } finally { setUploading(false) }
   }
@@ -372,7 +372,6 @@ export function Composer({
           }}
         />
         <input ref={filePicker} type="file" multiple hidden
-          accept="image/png,image/jpeg,image/webp,image/gif,.txt,.md,.csv,.json,.js,.jsx,.ts,.tsx,.py,.css,.html,.xml,.yaml,.yml,.toml,.log,.sh,.ps1,.sql,.rs,.go,.java,.c,.h,.cpp"
           onChange={async (event) => {
             const files = Array.from(event.currentTarget.files || [])
             event.currentTarget.value = ''
@@ -381,7 +380,7 @@ export function Composer({
         <div className="composer-toolbar">
           <div className="composer-tools">
             <IconButton
-              label={uploading ? '正在上传图片…' : '添加图片、文本或代码文件'}
+              label={uploading ? '正在上传附件…' : '添加附件'}
               disabled={submitting || uploading}
               onClick={() => {
                 void attach()
