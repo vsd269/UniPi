@@ -11,6 +11,19 @@
  */
 
 export const ZH = {
+  Cancel: '取消',
+  'Select conversations': '批量管理对话',
+  'Done selecting': '完成选择',
+  'Select all visible conversations': '全选当前列表',
+  'Select all': '全选',
+  'Delete selected': '删除所选',
+  'Delete conversation': '删除对话',
+  'Delete conversations': '删除对话',
+  'Conversations to delete:': '将删除的对话数：',
+  'These UniPi conversations and their messages will be permanently deleted. This cannot be undone.': '将永久删除这些 UniPi 对话及消息，无法撤销。',
+  'Native Pi Desktop sessions and original attachment files are not deleted.': 'Pi Desktop 原生会话和原始附件文件会保留。',
+  'Delete permanently': '确认删除',
+  'Deleting…': '正在删除…',
   Unofficial: '非官方',
   'Search conversations': '搜索对话',
   Chat: '对话',

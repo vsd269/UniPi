@@ -4,6 +4,8 @@ import { composerCommands, parseComposerCommand } from './commands'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
   Archive,
+  ListChecks,
+  Trash2,
   ArrowRight,
   ArrowUpRight,
   BookOpen,
@@ -116,6 +118,10 @@ export function App() {
   const [page, setPage] = useState<'chat' | 'projects' | 'files' | 'docs'>('chat')
   const [commands, setCommands] = useState(false)
   const [archived, setArchived] = useState(false)
+  const [selectingSessions, setSelectingSessions] = useState(false)
+  const [selectedSessions, setSelectedSessions] = useState<string[]>([])
+  const [deleteCandidates, setDeleteCandidates] = useState<string[]>([])
+  const [deletingSessions, setDeletingSessions] = useState(false)
   const [projectOpen, setProjectOpen] = useState(true)
   const [conversationsOpen, setConversationsOpen] = useState(true)
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
@@ -490,6 +496,28 @@ export function App() {
           Number(preferences.pinnedSessionIds.includes(a.sessionId)) ||
         (b.lastActivityAt || b.updatedAt).localeCompare(a.lastActivityAt || a.updatedAt),
     )
+  const selectedVisibleIds = visibleSessions.filter(session => selectedSessions.includes(session.sessionId)).map(session => session.sessionId)
+  const confirmDeleteSessions = async () => {
+    if (deletingSessions || !deleteCandidates.length) return
+    const ids = [...deleteCandidates]
+    setDeletingSessions(true)
+    try {
+      await window.muse.deleteSessions(ids)
+      historySequence.current++
+      setSessions(current => current.filter(session => !ids.includes(session.sessionId)))
+      setSelectedSessions(current => current.filter(id => !ids.includes(id)))
+      setDrafts(current => Object.fromEntries(Object.entries(current).filter(([id]) => !ids.includes(id))))
+      savePreferences({
+        pinnedSessionIds: preferences.pinnedSessionIds.filter(id => !ids.includes(id)),
+        archivedSessionIds: preferences.archivedSessionIds.filter(id => !ids.includes(id)),
+      })
+      if (ids.includes(activeId.current || '')) startNew()
+      setDeleteCandidates([])
+      void refreshSessions()
+    } catch (error) {
+      showError(error instanceof Error ? error.message : String(error))
+    } finally { setDeletingSessions(false) }
+  }
   const groupedSessions: { group: string; entries: MuseSession[] }[] = []
   for (const session of visibleSessions) {
     const group = conversationGroup(session, preferences.pinnedSessionIds)
@@ -677,7 +705,21 @@ export function App() {
           >
             <Archive size={13} />
           </IconButton>
+          <IconButton label={selectingSessions ? 'Done selecting' : 'Select conversations'} active={selectingSessions}
+            onClick={() => { setSelectingSessions(value => !value); setSelectedSessions([]); setConversationsOpen(true) }}>
+            <ListChecks size={14} />
+          </IconButton>
         </div>
+        {selectingSessions && (
+          <div className="conversation-selection">
+            <label><input type="checkbox" aria-label="Select all visible conversations"
+              checked={visibleSessions.length > 0 && selectedVisibleIds.length === visibleSessions.length}
+              onChange={event => setSelectedSessions(event.target.checked ? visibleSessions.map(session => session.sessionId) : [])} />
+              <span>Select all</span></label>
+            <button type="button" className="text-button conversation-delete-action" disabled={!selectedVisibleIds.length || deletingSessions}
+              onClick={() => setDeleteCandidates(selectedVisibleIds)}><Trash2 size={13} /><span>Delete selected</span> ({selectedVisibleIds.length})</button>
+          </div>
+        )}
         <div className={`conversation-list ${conversationsOpen ? '' : 'is-collapsed'}`}>
           <div className={`sidebar-collapse ${conversationsOpen ? 'open' : ''}`}>
             <div className="sidebar-collapse-inner">
@@ -723,6 +765,9 @@ export function App() {
                             key={session.sessionId}
                             className={`conversation-row ${session.sessionId === view?.session.sessionId ? 'selected' : ''}`}
                           >
+                            {selectingSessions && <input className="conversation-checkbox" type="checkbox"
+                              aria-label={`Select ${sessionTitle(session)}`} checked={selectedSessions.includes(session.sessionId)}
+                              onChange={event => setSelectedSessions(current => event.target.checked ? [...current, session.sessionId] : current.filter(id => id !== session.sessionId))} />}
                             <button
                               className="conversation-link"
                               title={sessionTitle(session)}
@@ -753,7 +798,7 @@ export function App() {
                                 {friendlyTime(session.lastActivityAt || session.updatedAt)}
                               </time>
                             </button>
-                            <button
+                            {!selectingSessions && <button
                               className="row-pin"
                               title={
                                 preferences.pinnedSessionIds.includes(session.sessionId)
@@ -764,7 +809,11 @@ export function App() {
                               onClick={() => togglePin(session.sessionId)}
                             >
                               <Pin size={12} />
-                            </button>
+                            </button>}
+                            {!selectingSessions && <button type="button" className="row-delete" title="Delete conversation"
+                              aria-label={`Delete ${sessionTitle(session)}`} onClick={() => setDeleteCandidates([session.sessionId])}>
+                              <Trash2 size={13} />
+                            </button>}
                           </div>
                         ))}
                       </div>
@@ -1119,6 +1168,20 @@ export function App() {
           onTheme={(theme) => savePreferences({ theme })}
           onClose={() => setCommands(false)}
         />
+      )}
+      {deleteCandidates.length > 0 && (
+        <Dialog title="Delete conversations" onClose={() => { if (!deletingSessions) setDeleteCandidates([]) }}>
+          <p><span>Conversations to delete:</span> {deleteCandidates.length}</p>
+          <ul>{deleteCandidates.slice(0, 3).map(id => { const session = sessions.find(entry => entry.sessionId === id); return <li key={id}>{session ? sessionTitle(session) : id}</li> })}</ul>
+          <p>These UniPi conversations and their messages will be permanently deleted. This cannot be undone.</p>
+          <p>Native Pi Desktop sessions and original attachment files are not deleted.</p>
+          <div className="request-actions">
+            <button type="button" className="button secondary" disabled={deletingSessions} onClick={() => setDeleteCandidates([])}>Cancel</button>
+            <button type="button" className="button danger" disabled={deletingSessions} onClick={() => void confirmDeleteSessions()}>
+              {deletingSessions ? 'Deleting…' : 'Delete permanently'}
+            </button>
+          </div>
+        </Dialog>
       )}
       {rename && view && (
         <Dialog

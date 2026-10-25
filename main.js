@@ -182,11 +182,17 @@ function requireSession(sessionId) {
 
 // ── persistence ─────────────────────────────────────────────────────────────
 
+const writes = new Map();
 async function writeJson(file, value) {
-  await fs.mkdir(path.dirname(file), { recursive: true });
-  const temp = `${file}.tmp`;
-  await fs.writeFile(temp, JSON.stringify(value, null, 2), { mode: 0o600 });
-  await fs.rename(temp, file);
+  const contents = JSON.stringify(value, null, 2);
+  const next = (writes.get(file) || Promise.resolve()).catch(() => {}).then(async () => {
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    const temp = `${file}.tmp`;
+    await fs.writeFile(temp, contents, { mode: 0o600 });
+    await fs.rename(temp, file);
+  });
+  writes.set(file, next);
+  try { await next; } finally { if (writes.get(file) === next) writes.delete(file); }
 }
 
 async function persistPreferences() {
@@ -197,7 +203,7 @@ async function persistPreferences() {
   }
 }
 
-async function persistSessions() {
+async function persistSessions(strict = false) {
   const dump = { sessions: [], items: {} };
   for (const [sessionId, live] of sessions) {
     dump.sessions.push(live.session);
@@ -207,6 +213,7 @@ async function persistSessions() {
     await writeJson(sessionsFile, dump);
   } catch (error) {
     console.log(`[muse] could not save conversations: ${messageOf(error)}`);
+    if (strict) throw error;
   }
 }
 
@@ -869,6 +876,21 @@ function noAttachments() {
 }
 
 const handlers = {
+  'delete-sessions': async ids => {
+    if (!Array.isArray(ids) || !ids.length || ids.length > 500 || ids.some(id => typeof id !== 'string')) throw Error('请选择 1 至 500 个对话。');
+    const targets = [...new Set(ids)].filter(id => sessions.has(id));
+    if (targets.some(id => sessions.get(id).session.status === 'running')) throw Error('请先停止所选对话中正在进行的回复，再删除。');
+    const removed = targets.map(id => [id, sessions.get(id)]);
+    for (const id of targets) sessions.delete(id);
+    try { await persistSessions(true); } catch (error) {
+      for (const [id, live] of removed) sessions.set(id, live);
+      throw error;
+    }
+    prefs.pinnedSessionIds = prefs.pinnedSessionIds.filter(id => !targets.includes(id));
+    prefs.archivedSessionIds = prefs.archivedSessionIds.filter(id => !targets.includes(id));
+    await persistPreferences();
+    emit({ type: 'sessions-changed' });
+  },
   "update-status": () => ({ available: false, canCheck: false, automaticChecks: false }),
   "check-updates": () => ({ available: false, canCheck: false, automaticChecks: false }),
   "automatic-updates": () => ({ available: false, canCheck: false, automaticChecks: false }),

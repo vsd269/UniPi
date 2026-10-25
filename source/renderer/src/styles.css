@@ -603,7 +603,7 @@ kbd {
 }
 .row-pin {
   position: absolute;
-  right: 5px;
+  right: 29px;
   width: 22px;
   height: 23px;
   border-radius: 5px;
@@ -620,6 +620,21 @@ kbd {
 .conversation-row:hover time {
   visibility: hidden;
 }
+.row-delete {
+  position: absolute; right: 4px; width: 23px; height: 23px;
+  display: grid; place-items: center; border-radius: 5px;
+  color: var(--muted); background: var(--sidebar-solid); opacity: 0;
+}
+.conversation-row:hover .row-delete, .conversation-row:focus-within .row-delete { opacity: 1; }
+.row-delete:hover { color: var(--red); background: var(--error-background); }
+.conversation-row:hover .conversation-link, .conversation-row:focus-within .conversation-link { padding-right: 56px; }
+.conversation-row:focus-within .row-pin { opacity: 1; }
+.conversation-row:focus-within time { visibility: hidden; }
+.conversation-checkbox { margin-left: 9px; flex-shrink: 0; accent-color: var(--accent); }
+.conversation-selection { display: flex; align-items: center; gap: 6px; padding: 5px 10px 9px; font-size: 12px; flex-wrap: wrap; }
+.conversation-selection label, .conversation-delete-action { display: inline-flex; align-items: center; gap: 4px; }
+.conversation-delete-action { color: var(--red); margin-left: auto; }
+.button.danger { background: #b43d3d; color: white; }
 .sidebar-empty {
   padding: 13px 10px;
   color: var(--muted);

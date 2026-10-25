@@ -176,6 +176,7 @@
     cancel: (sessionId) => call('cancel', [sessionId]),
     compact: (sessionId) => call('compact', [sessionId]),
     renameSession: (sessionId, name) => call('rename', [sessionId, name]),
+    deleteSessions: (sessionIds) => call('delete-sessions', [sessionIds]),
     models: (sessionId) => call('models', [sessionId]),
     setModel: (sessionId, modelId) => call('set-model', [sessionId, modelId]),
     approve: (sessionId, approvalId, choiceId) => call('approve', [sessionId, approvalId, choiceId]),

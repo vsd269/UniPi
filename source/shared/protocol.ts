@@ -235,6 +235,7 @@ export interface DesktopAPI {
   cancel(sessionId: string): Promise<void>
   compact(sessionId: string): Promise<{ status: string }>
   renameSession(sessionId: string, name: string): Promise<void>
+  deleteSessions(sessionIds: string[]): Promise<void>
   models(sessionId?: string): Promise<MuseModel[]>
   setModel(sessionId: string, modelId: string): Promise<void>
   approve(sessionId: string, approvalId: string, choiceId: string): Promise<void>
