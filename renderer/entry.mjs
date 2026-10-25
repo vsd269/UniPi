@@ -204,6 +204,8 @@ export async function onLoad(pi) {
 
   container = document.createElement('div')
   container.className = 'muse-root'
+  // Reserve the three window controls and the return button when the sidebar is hidden.
+  container.style.setProperty('--titlebar-leading-space', '132px')
   shadow.append(container)
 
   closeButton = document.createElement('button')

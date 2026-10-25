@@ -806,7 +806,7 @@ kbd {
   transition: padding-left 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .workspace-titlebar.with-traffic-lights {
-  padding-left: 96px;
+  padding-left: var(--titlebar-leading-space, 96px);
 }
 .workspace-breadcrumb {
   display: flex;
