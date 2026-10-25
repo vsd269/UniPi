@@ -1,0 +1,5 @@
+node_modules/
+renderer/*.bak*
+dist/*.piplug
+!dist/local.unipi-0.3.11.piplug
+*.log
